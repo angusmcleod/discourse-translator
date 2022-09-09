@@ -77,16 +77,19 @@ module DiscourseTranslator
       res["languages"].any? { |obj| obj["language"] == source }
     end
 
-    def self.translate(object, target_language = I18n.locale)
+    def self.translate(object, target_lang = I18n.locale)
       detected_lang = detect(object)
+      target_lang_map = SUPPORTED_LANG_MAPPING[target_lang.to_sym]
 
-      raise I18n.t('translator.failed') unless translate_supported?(detected_lang, target_language)
+      Rails.logger.info "TRANSLATE: #{detected_lang} #{target_lang_map}"
 
-      translated_text = from_custom_fields(object, target_language) do
+      return unless target_lang_map.present? && detected_lang != target_lang_map
+
+      translated_text = from_custom_fields(object, target_lang) do
         res = result(TRANSLATE_URI,
           q: get_text(object, MAXLENGTH),
           source: detected_lang,
-          target: SUPPORTED_LANG_MAPPING[target_language.to_sym]
+          target: target_lang_map
         )
         res["translations"][0]["translatedText"]
       end
@@ -107,6 +110,8 @@ module DiscourseTranslator
         body = JSON.parse(response.body)
       rescue JSON::ParserError
       end
+
+      Rails.logger.info "RAW RESPONSE FROM GOOGLE: #{body}"
 
       if response.status != 200
         raise TranslatorError.new(body || response.inspect)
