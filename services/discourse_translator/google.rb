@@ -81,7 +81,7 @@ module DiscourseTranslator
       detected_lang = detect(object)
       target_lang_map = SUPPORTED_LANG_MAPPING[target_lang.to_sym]
 
-      Rails.logger.info "TRANSLATE: #{detected_lang} #{target_lang_map}"
+      Rails.logger.warn("TRANSLATE: #{detected_lang} #{target_lang_map}")
 
       return unless target_lang_map.present? && detected_lang != target_lang_map
 
@@ -111,7 +111,7 @@ module DiscourseTranslator
       rescue JSON::ParserError
       end
 
-      Rails.logger.info "RAW RESPONSE FROM GOOGLE: #{body}"
+      Rails.logger.warn("RAW RESPONSE FROM GOOGLE: #{body}")
 
       if response.status != 200
         raise TranslatorError.new(body || response.inspect)
