@@ -83,7 +83,9 @@ module DiscourseTranslator
 
       Rails.logger.warn("TRANSLATE: #{detected_lang} #{target_lang_map}")
 
-      return unless target_lang_map.present? && detected_lang != target_lang_map
+      unless target_lang_map.present? && detected_lang != target_lang_map
+        raise DiscourseTranslator::TranslatorError.new(I18n.t('translator.failed'))
+      end
 
       translated_text = from_custom_fields(object, target_lang) do
         res = result(TRANSLATE_URI,

@@ -29,8 +29,9 @@ RSpec.describe TopicListItemSerializer do
 
       before do
         SiteSetting.translator_show_topic_titles_in_user_locale = true
-        Topic.any_instance.stubs(:translated_title).returns(translated_title)
-        Topic.any_instance.stubs(:title_language).returns(japanese_locale)
+        topic.custom_fields[DiscourseTranslator::DETECTED_TITLE_LANG_CUSTOM_FIELD] = 'en'
+        topic.custom_fields[DiscourseTranslator::TRANSLATED_CUSTOM_FIELD] = { "#{japanese_locale}" => translated_title }
+        topic.save_custom_fields(true)
       end
 
       it "serializes translated titles and metadata" do
@@ -39,7 +40,7 @@ RSpec.describe TopicListItemSerializer do
         expect(serializer.fancy_title).to eq(translated_title)
         expect(serializer.original_title).to eq(topic.title)
         expect(serializer.title_translated).to eq(true)
-        expect(serializer.title_language).to eq(japanese_locale)
+        expect(serializer.title_language).to eq("en")
       end
     end
   end

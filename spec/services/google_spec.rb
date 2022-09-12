@@ -71,45 +71,26 @@ RSpec.describe DiscourseTranslator::Google do
     context "works" do
       before do
         Excon.expects(:post)
-          .times(3)
+          .times(2)
           .returns(
             mock_response.new(200, %{ { "data": { "detections": [ [ { "language": "#{detected_lang}", "isReliable": false, "confidence": 0.18397073 } ] ] } } }),
-            mock_response.new(200, %{ { "data": { "languages": [ { "language": "#{detected_lang}" }] } } }),
             mock_response.new(200, %{ { "data": { "translations": [ { "translatedText": "#{translated_text}" }] } } })
           )
       end
 
       it 'with posts' do
-        expect(described_class.translate(post)).to eq([detected_lang, translated_text])
-        expect(post.custom_fields[DiscourseTranslator::TRANSLATED_CUSTOM_FIELD]).to eq({ "en" => translated_text })
+        expect(described_class.translate(post, target_lang)).to eq([detected_lang, translated_text])
+        expect(post.custom_fields[DiscourseTranslator::TRANSLATED_CUSTOM_FIELD]).to eq({ "#{target_lang}" => translated_text })
       end
 
       it 'with topic titles' do
-        expect(described_class.translate(topic)).to eq([detected_lang, translated_text])
-        expect(topic.custom_fields[DiscourseTranslator::TRANSLATED_CUSTOM_FIELD]).to eq({ "en" => translated_text })
+        expect(described_class.translate(topic, target_lang)).to eq([detected_lang, translated_text])
+        expect(topic.custom_fields[DiscourseTranslator::TRANSLATED_CUSTOM_FIELD]).to eq({ "#{target_lang}" => translated_text })
       end
     end
 
     it 'raises an error on failure' do
-      described_class.expects(:access_token).returns('12345')
       described_class.expects(:detect).returns('en')
-
-      Excon.expects(:post).returns(mock_response.new(
-        400,
-        { error: 'something went wrong', error_description: 'you passed in a wrong param' }.to_json
-      ))
-
-      expect { described_class.translate(post) }.to raise_error DiscourseTranslator::TranslatorError
-    end
-
-    it 'raises an error when the response is not JSON' do
-      described_class.expects(:access_token).returns('12345')
-      described_class.expects(:detect).returns('en')
-
-      Excon.expects(:post).returns(mock_response.new(
-        413,
-        "<html><body>some html</body></html>"
-      ))
 
       expect { described_class.translate(post) }.to raise_error DiscourseTranslator::TranslatorError
     end
