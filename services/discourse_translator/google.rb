@@ -81,11 +81,9 @@ module DiscourseTranslator
       detected_lang = detect(object)
       target_lang_map = SUPPORTED_LANG_MAPPING[target_lang.to_sym]
 
-      Rails.logger.warn("TRANSLATE: #{detected_lang} #{target_lang_map}")
+      Rails.logger.warn("TRANSLATING: #{detected_lang} #{target_lang_map}")
 
-      unless target_lang_map.present? && detected_lang != target_lang_map
-        raise DiscourseTranslator::TranslatorError.new(I18n.t('translator.failed'))
-      end
+      return unless target_lang_map.present? && detected_lang != target_lang_map
 
       translated_text = from_custom_fields(object, target_lang) do
         res = result(TRANSLATE_URI,
@@ -95,6 +93,8 @@ module DiscourseTranslator
         )
         res["translations"][0]["translatedText"]
       end
+
+      Rails.logger.warn("TRANSLATED TEXT: #{translated_text}")
 
       [detected_lang, translated_text]
     end
